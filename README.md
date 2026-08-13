@@ -1,57 +1,244 @@
-# Credit Risk Prediction with Explainable AI (SHAP vs LIME)
+# Credit Default Prediction with Explainable AI
 
-A project comparing model performance and explanation consistency (SHAP vs LIME)
-for credit default prediction, using the UCI "Default of Credit Card Clients" dataset.
+A machine learning project for predicting credit card default and analyzing the consistency of local explanations produced by SHAP and LIME.
 
-## 1. Setup
+The project uses the UCI **Default of Credit Card Clients** dataset and evaluates Logistic Regression, Random Forest, and XGBoost models. The main analysis focuses on the agreement between SHAP and LIME explanations for individual predictions.
 
-```bash
-cd credit-risk-xai
+## 1. Project Overview
+
+Credit-default prediction models can achieve strong predictive performance while remaining difficult to interpret.
+
+This project investigates two questions:
+
+1. How consistently do SHAP and LIME identify important features for the same credit-default prediction?
+2. Does explanation agreement vary across customer age groups or according to the number of top features considered?
+
+The explanation agreement is measured using **Jaccard similarity** between the features identified as important by SHAP and LIME.
+
+## 2. Dataset
+
+This project uses the UCI **Default of Credit Card Clients** dataset.
+
+The dataset contains information on 30,000 credit card customers in Taiwan and includes demographic information, credit limits, payment history, bill amounts, payment amounts, and whether the customer defaulted on their payment in the following month.
+
+Dataset source:
+
+https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
+
+### Dataset setup
+
+1. Download the dataset from UCI.
+2. Extract `default of credit card clients.xls`.
+3. Rename it to:
+
+```text
+credit_card_default.xls
+```
+
+4. Place it inside:
+
+```text
+data/credit_card_default.xls
+```
+
+The `.xls` file requires the `xlrd` package, which is included in `requirements.txt`.
+
+## 3. Project Structure
+
+```text
+Credit-Default-Prediction/
+│
+├── data/
+│   ├── credit_card_default.xls
+│   ├── train.csv
+│   └── test.csv
+│
+├── outputs/
+│   ├── model_comparison.csv
+│   ├── shap_lime_agreement.csv
+│   ├── agreement_by_age_group.csv
+│   ├── agreement_histogram.png
+│   ├── shap_summary.png
+│   ├── age_group_statistics.csv
+│   ├── age_group_statistical_test.csv
+│   ├── top_k_robustness.csv
+│   ├── top_k_robustness.png
+│   ├── feature_frequency_comparison.csv
+│   └── final_research_summary.csv
+│
+├── src/
+│   ├── preprocess.py
+│   ├── train_models.py
+│   ├── explain.py
+│   └── research_analysis.py
+│
+├── README.md
+└── requirements.txt
+```
+
+## 4. Installation
+
+Create and activate a virtual environment.
+
+### Windows
+
+```powershell
 python -m venv venv
-source venv/bin/activate      # on Windows: venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
+```
+
+Install the dependencies:
+
+```powershell
 pip install -r requirements.txt
 ```
 
-## 2. Get the dataset
+## 5. Run the Pipeline
 
-We're using the **UCI "Default of Credit Card Clients" dataset** — 30,000 credit
-card customers in Taiwan, with payment history and whether they defaulted the
-next month. No login or account needed.
+### Step 1 — Preprocess the dataset
 
-1. Go to https://archive.ics.uci.edu/dataset/350/default+of+credit+card+clients
-2. Click **"Download"** — you'll get a zip file, no sign-in required.
-3. Unzip it — inside is `default of credit card clients.xls`
-4. Rename it to `credit_card_default.xls` and place it in the `data/` folder, so
-   you have: `credit-risk-xai/data/credit_card_default.xls`
-
-(Reading `.xls` needs the `xlrd` package — it's already in `requirements.txt`.)
-
-## 3. Run the pipeline
-
-```bash
-python src/preprocess.py       # cleans data, creates train.csv and test.csv
-python src/train_models.py     # trains LogReg, RandomForest, XGBoost; saves models + metrics
-python src/explain.py          # runs SHAP + LIME, compares them, saves plots to outputs/
+```powershell
+python src/preprocess.py
 ```
 
-## 4. What each script does
+This removes the ID column, normalizes undocumented categorical codes, performs a stratified train/test split, and creates:
 
-- **preprocess.py** — loads the UCI dataset, removes the ID column, normalizes
-  undocumented EDUCATION and MARRIAGE codes, performs a stratified train/test
-  split, and saves train.csv and test.csv.
-- **train_models.py** — trains 3 models (Logistic Regression as interpretable
-  baseline, Random Forest, XGBoost), evaluates with AUC-ROC / F1 / precision-recall
-  (important since defaults are a minority class), saves all trained models and the model comparison results.
-- **explain.py** — generates SHAP values and LIME explanations for the same set
-  of test customers, then computes an agreement score between the two methods
-  (this comparison is your paper's novelty angle).
+```text
+data/train.csv
+data/test.csv
+```
 
-## 5. Next steps for the paper
+### Step 2 — Train the models
 
-- Run `explain.py` on 200 age-stratified test samples and look at the `shap_lime_agreement.csv`
-  output — this is your core result table.
-- Try splitting customers into subgroups (e.g., by age or income bracket) and see
-  if SHAP/LIME agreement differs across groups — this is a stronger, more specific
-  research question than "SHAP vs LIME" alone.
-- Optional: add a fairness check (do explanations reveal reliance on proxy variables
-  like age?).
+```powershell
+python src/train_models.py
+```
+
+Three models are evaluated:
+
+- Logistic Regression
+- Random Forest
+- XGBoost
+
+The evaluation includes:
+
+- AUC-ROC
+- Average Precision (PR-AUC)
+- F1-score
+- Precision
+- Recall
+
+Model results are saved to:
+
+```text
+outputs/model_comparison.csv
+```
+
+### Step 3 — Generate SHAP and LIME explanations
+
+```powershell
+python src/explain.py
+```
+
+The script generates local explanations for 200 age-stratified test samples and calculates SHAP-LIME agreement using Jaccard similarity for:
+
+- Top-3 features
+- Top-5 features
+- Top-10 features
+
+The results are saved to:
+
+```text
+outputs/shap_lime_agreement.csv
+```
+
+### Step 4 — Run statistical analysis
+
+```powershell
+python src/research_analysis.py
+```
+
+This performs:
+
+- Bootstrap confidence intervals
+- Age-group comparison
+- Kruskal-Wallis statistical testing
+- Epsilon-squared effect size calculation
+- Top-K robustness analysis
+- Feature-level frequency analysis
+
+The resulting statistics are saved in the `outputs/` directory.
+
+## 6. Current Experimental Results
+
+Using the current 200-sample experiment, the mean Top-5 SHAP-LIME Jaccard agreement is approximately:
+
+```text
+0.4157
+```
+
+with a 95% bootstrap confidence interval of approximately:
+
+```text
+0.3921 – 0.4390
+```
+
+The observed mean agreement increases as more top features are considered:
+
+| Top-K | Mean Jaccard Agreement |
+|------:|-----------------------:|
+| 3     | 0.3755 |
+| 5     | 0.4157 |
+| 10    | 0.4344 |
+
+Age-group analysis did not detect a statistically significant difference in explanation agreement:
+
+```text
+Kruskal-Wallis H = 0.7658
+p = 0.8576
+```
+
+These results are preliminary experimental findings and should not be interpreted as evidence that SHAP or LIME is universally more reliable.
+
+## 7. Research Focus
+
+The research focuses on **explanation consistency** rather than simply comparing predictive performance.
+
+The central idea is to investigate whether two widely used explainability methods produce similar feature-level explanations for the same underlying machine learning model.
+
+The analysis considers:
+
+- Cross-method explanation agreement
+- Agreement across different explanation granularities
+- Agreement across customer age groups
+- Feature-level differences between SHAP and LIME
+
+Further experiments will evaluate explanation stability and strengthen the statistical analysis.
+
+## 8. Limitations
+
+The current study has several limitations:
+
+- The analysis uses a single public credit-default dataset.
+- The SHAP-LIME comparison currently focuses on XGBoost explanations.
+- The explanation sample contains 200 test customers.
+- Jaccard similarity measures feature-set overlap but does not directly compare attribution magnitude or direction.
+- Age is currently the primary subgroup variable investigated.
+- Additional datasets and stability experiments would be required to support broader conclusions.
+
+## 9. Technologies
+
+- Python
+- Pandas
+- NumPy
+- Scikit-learn
+- XGBoost
+- SHAP
+- LIME
+- Matplotlib
+- SciPy
+- Joblib
+
+## 10. License
+
+This project is intended for academic and research purposes.
