@@ -29,7 +29,7 @@ next month. No login or account needed.
 ## 3. Run the pipeline
 
 ```bash
-python src/preprocess.py       # cleans data, saves data/processed.csv
+python src/preprocess.py       # cleans data, creates train.csv and test.csv
 python src/train_models.py     # trains LogReg, RandomForest, XGBoost; saves models + metrics
 python src/explain.py          # runs SHAP + LIME, compares them, saves plots to outputs/
 ```
@@ -41,7 +41,7 @@ python src/explain.py          # runs SHAP + LIME, compares them, saves plots to
   split, and saves train.csv and test.csv.
 - **train_models.py** — trains 3 models (Logistic Regression as interpretable
   baseline, Random Forest, XGBoost), evaluates with AUC-ROC / F1 / precision-recall
-  (important since defaults are a minority class), saves the best model.
+  (important since defaults are a minority class), saves all trained models and the model comparison results.
 - **explain.py** — generates SHAP values and LIME explanations for the same set
   of test customers, then computes an agreement score between the two methods
   (this comparison is your paper's novelty angle).
