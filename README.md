@@ -1,7 +1,7 @@
 # Credit Risk Prediction with Explainable AI (SHAP vs LIME)
 
 A project comparing model performance and explanation consistency (SHAP vs LIME)
-for credit default prediction, using the Kaggle "Give Me Some Credit" dataset.
+for credit default prediction, using the UCI "Default of Credit Card Clients" dataset.
 
 ## 1. Setup
 
@@ -36,8 +36,9 @@ python src/explain.py          # runs SHAP + LIME, compares them, saves plots to
 
 ## 4. What each script does
 
-- **preprocess.py** — loads raw CSV, handles missing values (income, dependents),
-  clips outliers, does a train/test split, saves the cleaned data.
+- **preprocess.py** — loads the UCI dataset, removes the ID column, normalizes
+  undocumented EDUCATION and MARRIAGE codes, performs a stratified train/test
+  split, and saves train.csv and test.csv.
 - **train_models.py** — trains 3 models (Logistic Regression as interpretable
   baseline, Random Forest, XGBoost), evaluates with AUC-ROC / F1 / precision-recall
   (important since defaults are a minority class), saves the best model.
@@ -47,7 +48,7 @@ python src/explain.py          # runs SHAP + LIME, compares them, saves plots to
 
 ## 5. Next steps for the paper
 
-- Run `explain.py` on ~50-100 test samples and look at the `shap_lime_agreement.csv`
+- Run `explain.py` on 200 age-stratified test samples and look at the `shap_lime_agreement.csv`
   output — this is your core result table.
 - Try splitting customers into subgroups (e.g., by age or income bracket) and see
   if SHAP/LIME agreement differs across groups — this is a stronger, more specific
